@@ -1,0 +1,25 @@
+server:
+  http_port: 8080
+  grpc_port: 8081
+  mode: debug  # debug / release / test
+
+database:
+  driver: mysql
+  host: 127.0.0.1
+  port: 3306
+  dbname: ddframe
+  user: root
+  password: ""
+
+redis:
+  addr: 127.0.0.1:6379
+  password: ""
+  db: 0
+
+jwt:
+  secret: "change-me-in-production"
+  expires_in: 24  # hours
+
+log:
+  level: debug    # debug / info / warn / error
+  format: console # json / console
