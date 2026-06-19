@@ -55,7 +55,9 @@ func (s *stubInventoryClient) QueryStock(_ context.Context, _ int64) (int, error
 
 type stubNotification struct{}
 
-func (s *stubNotification) NotifyOrderCreated(_ context.Context, _ *orderdomain.Order) error { return nil }
+func (s *stubNotification) NotifyOrderCreated(_ context.Context, _ *orderdomain.Order) error {
+	return nil
+}
 func (s *stubNotification) NotifyOrderCancelled(_ context.Context, _ *orderdomain.Order, _ string) error {
 	return nil
 }
