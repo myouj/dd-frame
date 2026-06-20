@@ -3,7 +3,10 @@ package app
 import (
 	"github.com/gin-gonic/gin"
 
+	authmodule "github.com/example/dd-frame/internal/auth"
 	"github.com/example/dd-frame/example/order"
+	"github.com/example/dd-frame/middleware"
+	"github.com/example/dd-frame/pkg/auth"
 )
 
 // Wire 全局 Composition Root
@@ -13,10 +16,29 @@ import (
 func Wire(cfg *Config) *gin.Engine {
 	r := gin.New()
 
-	// API 版本组
+	// 全局中间件
+	r.Use(middleware.Recovery())
+	r.Use(middleware.CORS())
+	r.Use(middleware.RequestID())
+	r.Use(middleware.Logger())
+
+	jwtMgr := auth.NewJWTManager(cfg.JWT.Secret, cfg.JWT.ExpiresIn)
+
+	// 公开路由组（无需认证）
+	public := r.Group("/api/v1")
+
+	// 认证路由组（需要 JWT）
 	v1 := r.Group("/api/v1")
+	v1.Use(middleware.RequireAuth(jwtMgr))
 
 	// ---------- 注册业务模块 ----------
+
+	// auth 模块
+	if GlobalDB != nil {
+		authAPI, _ := authmodule.Wire(GlobalDB, jwtMgr, cfg.RBAC.SeedEnabled)
+		authAPI.RegisterPublicRoutes(public)
+		authAPI.RegisterRoutes(v1)
+	}
 
 	// 订单模块
 	orderAPI := order.Wire()
