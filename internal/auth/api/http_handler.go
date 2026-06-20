@@ -71,6 +71,16 @@ func (a *AuthAPI) RegisterRoutes(rg *gin.RouterGroup) {
 // ==================== Auth Handlers ====================
 
 // LoginHandler 登录
+//
+//	@Summary	用户登录
+//	@Tags		Auth
+//	@Accept		json
+//	@Produce	json
+//	@Param		body	body		service.LoginInput	true	"登录参数"
+//	@Success	200		{object}	response.Response
+//	@Failure	400		{object}	response.Response
+//	@Failure	401		{object}	response.Response
+//	@Router		/auth/login [post]
 func (a *AuthAPI) LoginHandler(c *gin.Context) {
 	var input service.LoginInput
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -88,6 +98,14 @@ func (a *AuthAPI) LoginHandler(c *gin.Context) {
 }
 
 // MeHandler 获取当前用户信息
+//
+//	@Summary	获取当前用户信息
+//	@Tags		Auth
+//	@Produce	json
+//	@Security	BearerAuth
+//	@Success	200	{object}	response.Response
+//	@Failure	401	{object}	response.Response
+//	@Router		/auth/me [get]
 func (a *AuthAPI) MeHandler(c *gin.Context) {
 	user, ok := auth.CurrentUser(c)
 	if !ok {
@@ -105,6 +123,17 @@ func (a *AuthAPI) MeHandler(c *gin.Context) {
 }
 
 // ChangePasswordHandler 修改密码
+//
+//	@Summary	修改密码
+//	@Tags		Auth
+//	@Accept		json
+//	@Produce	json
+//	@Security	BearerAuth
+//	@Param		body	body		service.ChangePasswordInput	true	"修改密码参数"
+//	@Success	200		{object}	response.Response
+//	@Failure	400		{object}	response.Response
+//	@Failure	401		{object}	response.Response
+//	@Router		/auth/password [put]
 func (a *AuthAPI) ChangePasswordHandler(c *gin.Context) {
 	user, ok := auth.CurrentUser(c)
 	if !ok {
@@ -129,6 +158,17 @@ func (a *AuthAPI) ChangePasswordHandler(c *gin.Context) {
 // ==================== User Handlers ====================
 
 // CreateUserHandler 创建用户
+//
+//	@Summary	创建用户
+//	@Tags		User
+//	@Accept		json
+//	@Produce	json
+//	@Security	BearerAuth
+//	@Param		body	body		service.CreateUserInput	true	"创建用户参数"
+//	@Success	200		{object}	response.Response
+//	@Failure	400		{object}	response.Response
+//	@Failure	409		{object}	response.Response
+//	@Router		/user [post]
 func (a *AuthAPI) CreateUserHandler(c *gin.Context) {
 	var input service.CreateUserInput
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -146,6 +186,15 @@ func (a *AuthAPI) CreateUserHandler(c *gin.Context) {
 }
 
 // GetUserHandler 获取用户详情
+//
+//	@Summary	获取用户详情
+//	@Tags		User
+//	@Produce	json
+//	@Security	BearerAuth
+//	@Param		id		path		int	true	"用户 ID"
+//	@Success	200		{object}	response.Response
+//	@Failure	404		{object}	response.Response
+//	@Router		/user/{id} [get]
 func (a *AuthAPI) GetUserHandler(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
@@ -163,6 +212,18 @@ func (a *AuthAPI) GetUserHandler(c *gin.Context) {
 }
 
 // UpdateUserHandler 更新用户
+//
+//	@Summary	更新用户
+//	@Tags		User
+//	@Accept		json
+//	@Produce	json
+//	@Security	BearerAuth
+//	@Param		id		path		int						true	"用户 ID"
+//	@Param		body	body		service.UpdateUserInput	true	"更新用户参数"
+//	@Success	200		{object}	response.Response
+//	@Failure	400		{object}	response.Response
+//	@Failure	404		{object}	response.Response
+//	@Router		/user/{id} [put]
 func (a *AuthAPI) UpdateUserHandler(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
@@ -185,6 +246,15 @@ func (a *AuthAPI) UpdateUserHandler(c *gin.Context) {
 }
 
 // DisableUserHandler 禁用用户
+//
+//	@Summary	禁用用户
+//	@Tags		User
+//	@Produce	json
+//	@Security	BearerAuth
+//	@Param		id		path		int	true	"用户 ID"
+//	@Success	200		{object}	response.Response
+//	@Failure	404		{object}	response.Response
+//	@Router		/user/{id} [delete]
 func (a *AuthAPI) DisableUserHandler(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
@@ -201,6 +271,15 @@ func (a *AuthAPI) DisableUserHandler(c *gin.Context) {
 }
 
 // ListUsersHandler 用户列表
+//
+//	@Summary	用户列表
+//	@Tags		User
+//	@Produce	json
+//	@Security	BearerAuth
+//	@Param		page		query		int	false	"页码（默认 1）"
+//	@Param		pageSize	query		int	false	"每页条数（默认 20）"
+//	@Success	200			{object}	response.Response
+//	@Router		/user [get]
 func (a *AuthAPI) ListUsersHandler(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "20"))
@@ -215,6 +294,18 @@ func (a *AuthAPI) ListUsersHandler(c *gin.Context) {
 }
 
 // AssignRoleHandler 分配角色
+//
+//	@Summary	为用户分配角色
+//	@Tags		User
+//	@Accept		json
+//	@Produce	json
+//	@Security	BearerAuth
+//	@Param		id		path		int						true	"用户 ID"
+//	@Param		body	body		service.AssignRoleInput	true	"角色参数"
+//	@Success	200		{object}	response.Response
+//	@Failure	400		{object}	response.Response
+//	@Failure	404		{object}	response.Response
+//	@Router		/user/{id}/roles [post]
 func (a *AuthAPI) AssignRoleHandler(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
@@ -237,6 +328,16 @@ func (a *AuthAPI) AssignRoleHandler(c *gin.Context) {
 }
 
 // RevokeRoleHandler 移除角色
+//
+//	@Summary	移除用户角色
+//	@Tags		User
+//	@Produce	json
+//	@Security	BearerAuth
+//	@Param		id			path		int		true	"用户 ID"
+//	@Param		roleCode	path		string	true	"角色编码"
+//	@Success	200			{object}	response.Response
+//	@Failure	404			{object}	response.Response
+//	@Router		/user/{id}/roles/{roleCode} [delete]
 func (a *AuthAPI) RevokeRoleHandler(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
@@ -256,6 +357,17 @@ func (a *AuthAPI) RevokeRoleHandler(c *gin.Context) {
 // ==================== Role Handlers ====================
 
 // CreateRoleHandler 创建角色
+//
+//	@Summary	创建角色
+//	@Tags		Role
+//	@Accept		json
+//	@Produce	json
+//	@Security	BearerAuth
+//	@Param		body	body		service.CreateRoleInput	true	"创建角色参数"
+//	@Success	200		{object}	response.Response
+//	@Failure	400		{object}	response.Response
+//	@Failure	409		{object}	response.Response
+//	@Router		/role [post]
 func (a *AuthAPI) CreateRoleHandler(c *gin.Context) {
 	var input service.CreateRoleInput
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -273,6 +385,15 @@ func (a *AuthAPI) CreateRoleHandler(c *gin.Context) {
 }
 
 // GetRoleHandler 获取角色详情
+//
+//	@Summary	获取角色详情
+//	@Tags		Role
+//	@Produce	json
+//	@Security	BearerAuth
+//	@Param		code	path		string	true	"角色编码"
+//	@Success	200		{object}	response.Response
+//	@Failure	404		{object}	response.Response
+//	@Router		/role/{code} [get]
 func (a *AuthAPI) GetRoleHandler(c *gin.Context) {
 	code := c.Param("code")
 
@@ -286,6 +407,18 @@ func (a *AuthAPI) GetRoleHandler(c *gin.Context) {
 }
 
 // UpdateRoleHandler 更新角色
+//
+//	@Summary	更新角色
+//	@Tags		Role
+//	@Accept		json
+//	@Produce	json
+//	@Security	BearerAuth
+//	@Param		code	path		string						true	"角色编码"
+//	@Param		body	body		service.UpdateRoleInput	true	"更新角色参数"
+//	@Success	200		{object}	response.Response
+//	@Failure	400		{object}	response.Response
+//	@Failure	404		{object}	response.Response
+//	@Router		/role/{code} [put]
 func (a *AuthAPI) UpdateRoleHandler(c *gin.Context) {
 	code := c.Param("code")
 
@@ -304,6 +437,15 @@ func (a *AuthAPI) UpdateRoleHandler(c *gin.Context) {
 }
 
 // DeleteRoleHandler 删除角色
+//
+//	@Summary	删除角色
+//	@Tags		Role
+//	@Produce	json
+//	@Security	BearerAuth
+//	@Param		code	path		string	true	"角色编码"
+//	@Success	200		{object}	response.Response
+//	@Failure	404		{object}	response.Response
+//	@Router		/role/{code} [delete]
 func (a *AuthAPI) DeleteRoleHandler(c *gin.Context) {
 	code := c.Param("code")
 
@@ -316,6 +458,13 @@ func (a *AuthAPI) DeleteRoleHandler(c *gin.Context) {
 }
 
 // ListRolesHandler 角色列表
+//
+//	@Summary	角色列表
+//	@Tags		Role
+//	@Produce	json
+//	@Security	BearerAuth
+//	@Success	200	{object}	response.Response
+//	@Router		/role [get]
 func (a *AuthAPI) ListRolesHandler(c *gin.Context) {
 	output, err := a.svc.ListRoles(c.Request.Context())
 	if err != nil {
@@ -327,6 +476,18 @@ func (a *AuthAPI) ListRolesHandler(c *gin.Context) {
 }
 
 // AssignPermHandler 分配权限
+//
+//	@Summary	为角色分配权限
+//	@Tags		Role
+//	@Accept		json
+//	@Produce	json
+//	@Security	BearerAuth
+//	@Param		code	path		string						true	"角色编码"
+//	@Param		body	body		service.AssignPermInput	true	"权限参数"
+//	@Success	200		{object}	response.Response
+//	@Failure	400		{object}	response.Response
+//	@Failure	404		{object}	response.Response
+//	@Router		/role/{code}/permissions [post]
 func (a *AuthAPI) AssignPermHandler(c *gin.Context) {
 	code := c.Param("code")
 
@@ -345,6 +506,16 @@ func (a *AuthAPI) AssignPermHandler(c *gin.Context) {
 }
 
 // RevokePermHandler 移除权限
+//
+//	@Summary	移除角色权限
+//	@Tags		Role
+//	@Produce	json
+//	@Security	BearerAuth
+//	@Param		code		path		string	true	"角色编码"
+//	@Param		permCode	path		string	true	"权限编码"
+//	@Success	200			{object}	response.Response
+//	@Failure	404			{object}	response.Response
+//	@Router		/role/{code}/permissions/{permCode} [delete]
 func (a *AuthAPI) RevokePermHandler(c *gin.Context) {
 	code := c.Param("code")
 	permCode := c.Param("permCode")
@@ -360,6 +531,17 @@ func (a *AuthAPI) RevokePermHandler(c *gin.Context) {
 // ==================== Permission Handlers ====================
 
 // CreatePermissionHandler 创建权限
+//
+//	@Summary	创建权限
+//	@Tags		Permission
+//	@Accept		json
+//	@Produce	json
+//	@Security	BearerAuth
+//	@Param		body	body		service.CreatePermissionInput	true	"创建权限参数"
+//	@Success	200		{object}	response.Response
+//	@Failure	400		{object}	response.Response
+//	@Failure	409		{object}	response.Response
+//	@Router		/permission [post]
 func (a *AuthAPI) CreatePermissionHandler(c *gin.Context) {
 	var input service.CreatePermissionInput
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -377,6 +559,18 @@ func (a *AuthAPI) CreatePermissionHandler(c *gin.Context) {
 }
 
 // UpdatePermissionHandler 更新权限
+//
+//	@Summary	更新权限
+//	@Tags		Permission
+//	@Accept		json
+//	@Produce	json
+//	@Security	BearerAuth
+//	@Param		code	path		string								true	"权限编码"
+//	@Param		body	body		service.UpdatePermissionInput	true	"更新权限参数"
+//	@Success	200		{object}	response.Response
+//	@Failure	400		{object}	response.Response
+//	@Failure	404		{object}	response.Response
+//	@Router		/permission/{code} [put]
 func (a *AuthAPI) UpdatePermissionHandler(c *gin.Context) {
 	code := c.Param("code")
 
@@ -395,6 +589,15 @@ func (a *AuthAPI) UpdatePermissionHandler(c *gin.Context) {
 }
 
 // DeletePermissionHandler 删除权限
+//
+//	@Summary	删除权限
+//	@Tags		Permission
+//	@Produce	json
+//	@Security	BearerAuth
+//	@Param		code	path		string	true	"权限编码"
+//	@Success	200		{object}	response.Response
+//	@Failure	404		{object}	response.Response
+//	@Router		/permission/{code} [delete]
 func (a *AuthAPI) DeletePermissionHandler(c *gin.Context) {
 	code := c.Param("code")
 
@@ -407,6 +610,14 @@ func (a *AuthAPI) DeletePermissionHandler(c *gin.Context) {
 }
 
 // ListPermissionsHandler 权限列表
+//
+//	@Summary	权限列表
+//	@Tags		Permission
+//	@Produce	json
+//	@Security	BearerAuth
+//	@Param		resource	query		string	false	"按资源筛选"
+//	@Success	200			{object}	response.Response
+//	@Router		/permission [get]
 func (a *AuthAPI) ListPermissionsHandler(c *gin.Context) {
 	resource := c.Query("resource")
 

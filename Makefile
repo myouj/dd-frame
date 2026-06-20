@@ -2,7 +2,7 @@
 # dd-frame Makefile
 # =============================================================================
 
-.PHONY: help build run test vet clean proto proto-gen proto-deps lint port-check db-init db-seed
+.PHONY: help build run test vet clean proto proto-gen proto-deps lint port-check db-init db-seed swagger swagger-deps
 
 # 默认目标
 .DEFAULT_GOAL := help
@@ -122,6 +122,16 @@ proto-breaking: ## 使用 buf 检查 proto 兼容性变更
 	cd $(PROTO_DIR) && buf breaking --against .git
 
 proto: proto-gen ## proto-gen 的别名
+
+# ---------------------------------------------------------------------------
+# Swagger 命令
+# ---------------------------------------------------------------------------
+
+swagger-deps: ## 安装 Swagger CLI 工具
+	go install github.com/swaggo/swag/cmd/swag@latest
+
+swagger: ## 生成 Swagger API 文档
+	swag init -g main.go -o docs --parseDependency --exclude internal/_template
 
 # ---------------------------------------------------------------------------
 # 数据库命令

@@ -2,6 +2,8 @@ package app
 
 import (
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 
 	"github.com/example/dd-frame/example/order"
 	authmodule "github.com/example/dd-frame/internal/auth"
@@ -52,6 +54,11 @@ func Wire(cfg *Config) *gin.Engine {
 	// example:
 	// productAPI := product.Wire()
 	// productAPI.RegisterRoutes(v1)
+
+	// Swagger UI（非 release 模式可用）
+	if cfg.Server.Mode != "release" {
+		r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	}
 
 	return r
 }
