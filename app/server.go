@@ -11,20 +11,11 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/example/dd-frame/middleware"
 	applog "github.com/example/dd-frame/pkg/log"
 )
 
 // RunServer 启动 Gin HTTP 服务器
 func RunServer(cfg *Config, router *gin.Engine) {
-	// 应用全局中间件
-	router.Use(
-		middleware.Recovery(),
-		middleware.Cors(),
-		middleware.RequestID(),
-		middleware.Logger(),
-	)
-
 	httpAddr := fmt.Sprintf(":%d", cfg.Server.HTTPPort)
 
 	srv := &http.Server{

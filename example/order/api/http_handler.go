@@ -30,6 +30,16 @@ func (a *OrderAPI) RegisterRoutes(rg *gin.RouterGroup) {
 }
 
 // CreateOrderHandler 创建订单 HTTP handler
+//
+//	@Summary	创建订单
+//	@Tags		Order
+//	@Accept		json
+//	@Produce	json
+//	@Security	BearerAuth
+//	@Param		body	body		service.CreateOrderInput	true	"创建订单参数"
+//	@Success	200		{object}	response.Response
+//	@Failure	400		{object}	response.Response
+//	@Router		/order [post]
 func (a *OrderAPI) CreateOrderHandler(c *gin.Context) {
 	var input service.CreateOrderInput
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -47,6 +57,15 @@ func (a *OrderAPI) CreateOrderHandler(c *gin.Context) {
 }
 
 // SubmitOrderHandler 提交订单 HTTP handler
+//
+//	@Summary	提交订单
+//	@Tags		Order
+//	@Produce	json
+//	@Security	BearerAuth
+//	@Param		orderNo	path		string	true	"订单编号"
+//	@Success	200		{object}	response.Response
+//	@Failure	404		{object}	response.Response
+//	@Router		/order/{orderNo}/submit [post]
 func (a *OrderAPI) SubmitOrderHandler(c *gin.Context) {
 	orderNo := c.Param("orderNo")
 	if err := a.svc.SubmitOrder(c.Request.Context(), orderNo); err != nil {
@@ -57,6 +76,16 @@ func (a *OrderAPI) SubmitOrderHandler(c *gin.Context) {
 }
 
 // CancelOrderHandler 取消订单 HTTP handler
+//
+//	@Summary	取消订单
+//	@Tags		Order
+//	@Produce	json
+//	@Security	BearerAuth
+//	@Param		orderNo	path		string	true	"订单编号"
+//	@Param		reason	formData	string	false	"取消原因"
+//	@Success	200		{object}	response.Response
+//	@Failure	404		{object}	response.Response
+//	@Router		/order/{orderNo}/cancel [post]
 func (a *OrderAPI) CancelOrderHandler(c *gin.Context) {
 	orderNo := c.Param("orderNo")
 	reason := c.PostForm("reason")

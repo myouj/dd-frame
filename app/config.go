@@ -12,6 +12,7 @@ type Config struct {
 	Database DatabaseConfig `mapstructure:"database"`
 	Redis    RedisConfig    `mapstructure:"redis"`
 	JWT      JWTConfig      `mapstructure:"jwt"`
+	RBAC     RBACConfig     `mapstructure:"rbac"`
 	Log      LogConfig      `mapstructure:"log"`
 }
 
@@ -49,6 +50,11 @@ type JWTConfig struct {
 type LogConfig struct {
 	Level  string `mapstructure:"level"`
 	Format string `mapstructure:"format"`
+}
+
+// RBACConfig RBAC 权限配置
+type RBACConfig struct {
+	SeedEnabled bool `mapstructure:"seed_enabled"`
 }
 
 // GlobalConfig 全局配置实例（启动时加载一次）

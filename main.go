@@ -3,7 +3,18 @@ package main
 import (
 	"github.com/example/dd-frame/app"
 	applog "github.com/example/dd-frame/pkg/log"
+
+	_ "github.com/example/dd-frame/docs" // swagger 生成文档
 )
+
+//	@title		dd-frame API
+//	@version	1.0
+//	@description	DDD 模块化单体项目 API 文档
+//	@BasePath	/api/v1
+//	@securityDefinitions.apikey	BearerAuth
+//	@in							header
+//	@name						Authorization
+//	@description			Bearer JWT Token
 
 func main() {
 	// 1. 加载配置

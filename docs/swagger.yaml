@@ -1,0 +1,798 @@
+basePath: /api/v1
+definitions:
+  response.Response:
+    properties:
+      code:
+        type: integer
+      data: {}
+      message:
+        type: string
+    type: object
+  service.AssignPermInput:
+    properties:
+      permCode:
+        type: string
+    required:
+    - permCode
+    type: object
+  service.AssignRoleInput:
+    properties:
+      roleCode:
+        type: string
+    required:
+    - roleCode
+    type: object
+  service.ChangePasswordInput:
+    properties:
+      newPassword:
+        type: string
+      oldPassword:
+        type: string
+    required:
+    - newPassword
+    - oldPassword
+    type: object
+  service.CreateOrderInput:
+    properties:
+      customerId:
+        type: integer
+      items:
+        items:
+          $ref: '#/definitions/service.OrderItemInput'
+        type: array
+    type: object
+  service.CreatePermissionInput:
+    properties:
+      action:
+        type: string
+      description:
+        type: string
+      name:
+        type: string
+      resource:
+        type: string
+    required:
+    - action
+    - name
+    - resource
+    type: object
+  service.CreateRoleInput:
+    properties:
+      code:
+        type: string
+      description:
+        type: string
+      name:
+        type: string
+    required:
+    - code
+    - name
+    type: object
+  service.CreateUserInput:
+    properties:
+      email:
+        type: string
+      nickname:
+        type: string
+      password:
+        type: string
+      phone:
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  service.LoginInput:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  service.OrderItemInput:
+    properties:
+      productId:
+        type: integer
+      quantity:
+        type: integer
+      unitPrice:
+        description: 分
+        type: integer
+    type: object
+  service.UpdatePermissionInput:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+    type: object
+  service.UpdateRoleInput:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+    type: object
+  service.UpdateUserInput:
+    properties:
+      email:
+        type: string
+      nickname:
+        type: string
+      phone:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: DDD 模块化单体项目 API 文档
+  title: dd-frame API
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 登录参数
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/service.LoginInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 用户登录
+      tags:
+      - Auth
+  /auth/me:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取当前用户信息
+      tags:
+      - Auth
+  /auth/password:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: 修改密码参数
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/service.ChangePasswordInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: 修改密码
+      tags:
+      - Auth
+  /order:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 创建订单参数
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/service.CreateOrderInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: 创建订单
+      tags:
+      - Order
+  /order/{orderNo}/cancel:
+    post:
+      parameters:
+      - description: 订单编号
+        in: path
+        name: orderNo
+        required: true
+        type: string
+      - description: 取消原因
+        in: formData
+        name: reason
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: 取消订单
+      tags:
+      - Order
+  /order/{orderNo}/submit:
+    post:
+      parameters:
+      - description: 订单编号
+        in: path
+        name: orderNo
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: 提交订单
+      tags:
+      - Order
+  /permission:
+    get:
+      parameters:
+      - description: 按资源筛选
+        in: query
+        name: resource
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: 权限列表
+      tags:
+      - Permission
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 创建权限参数
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/service.CreatePermissionInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: 创建权限
+      tags:
+      - Permission
+  /permission/{code}:
+    delete:
+      parameters:
+      - description: 权限编码
+        in: path
+        name: code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: 删除权限
+      tags:
+      - Permission
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: 权限编码
+        in: path
+        name: code
+        required: true
+        type: string
+      - description: 更新权限参数
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/service.UpdatePermissionInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: 更新权限
+      tags:
+      - Permission
+  /role:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: 角色列表
+      tags:
+      - Role
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 创建角色参数
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/service.CreateRoleInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: 创建角色
+      tags:
+      - Role
+  /role/{code}:
+    delete:
+      parameters:
+      - description: 角色编码
+        in: path
+        name: code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: 删除角色
+      tags:
+      - Role
+    get:
+      parameters:
+      - description: 角色编码
+        in: path
+        name: code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取角色详情
+      tags:
+      - Role
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: 角色编码
+        in: path
+        name: code
+        required: true
+        type: string
+      - description: 更新角色参数
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/service.UpdateRoleInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: 更新角色
+      tags:
+      - Role
+  /role/{code}/permissions:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 角色编码
+        in: path
+        name: code
+        required: true
+        type: string
+      - description: 权限参数
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/service.AssignPermInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: 为角色分配权限
+      tags:
+      - Role
+  /role/{code}/permissions/{permCode}:
+    delete:
+      parameters:
+      - description: 角色编码
+        in: path
+        name: code
+        required: true
+        type: string
+      - description: 权限编码
+        in: path
+        name: permCode
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: 移除角色权限
+      tags:
+      - Role
+  /user:
+    get:
+      parameters:
+      - description: 页码（默认 1）
+        in: query
+        name: page
+        type: integer
+      - description: 每页条数（默认 20）
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: 用户列表
+      tags:
+      - User
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 创建用户参数
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/service.CreateUserInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: 创建用户
+      tags:
+      - User
+  /user/{id}:
+    delete:
+      parameters:
+      - description: 用户 ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: 禁用用户
+      tags:
+      - User
+    get:
+      parameters:
+      - description: 用户 ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取用户详情
+      tags:
+      - User
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: 用户 ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 更新用户参数
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/service.UpdateUserInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: 更新用户
+      tags:
+      - User
+  /user/{id}/roles:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 用户 ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 角色参数
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/service.AssignRoleInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: 为用户分配角色
+      tags:
+      - User
+  /user/{id}/roles/{roleCode}:
+    delete:
+      parameters:
+      - description: 用户 ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 角色编码
+        in: path
+        name: roleCode
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: 移除用户角色
+      tags:
+      - User
+securityDefinitions:
+  BearerAuth:
+    description: Bearer JWT Token
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

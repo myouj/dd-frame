@@ -5,8 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/example/dd-frame/pkg/log"
-	"github.com/example/dd-frame/pkg/response"
+	applog "github.com/example/dd-frame/pkg/log"
 )
 
 // Recovery Panic 恢复中间件
@@ -14,9 +13,11 @@ func Recovery() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		defer func() {
 			if r := recover(); r != nil {
-				log.Error("panic recovered", "err", r, "path", c.Request.URL.Path)
-				response.Error(c, http.StatusInternalServerError, 50000, "internal server error")
-				c.Abort()
+				applog.Error("panic recovered", "error", r, "path", c.Request.URL.Path)
+				c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+					"code":    50000,
+					"message": "internal server error",
+				})
 			}
 		}()
 		c.Next()

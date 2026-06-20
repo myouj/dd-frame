@@ -6,37 +6,74 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/example/dd-frame/pkg/auth"
 	"github.com/example/dd-frame/pkg/response"
 )
 
-// Auth JWT 鉴权中间件
+// RequireAuth JWT 强制认证中间件
 //
-// 从 Authorization header 提取 Bearer token 并验证。
-// 验证成功后将 userID 和 companyID 注入 gin.Context。
-func Auth(secret string) gin.HandlerFunc {
+// 从 Authorization: Bearer <token> 提取并校验 Token，
+// 有效时将 *auth.AuthUser 注入 Context，否则返回 401。
+func RequireAuth(jwtMgr *auth.JWTManager) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		authHeader := c.GetHeader("Authorization")
-		if authHeader == "" {
+		tokenStr := extractBearerToken(c)
+		if tokenStr == "" {
 			response.Error(c, http.StatusUnauthorized, 40100, "authorization header required")
 			c.Abort()
 			return
 		}
 
-		parts := strings.SplitN(authHeader, " ", 2)
-		if len(parts) != 2 || parts[0] != "Bearer" {
-			response.Error(c, http.StatusUnauthorized, 40101, "invalid authorization format")
+		claims, err := jwtMgr.Parse(tokenStr)
+		if err != nil {
+			response.Error(c, http.StatusUnauthorized, 40101, "invalid or expired token")
 			c.Abort()
 			return
 		}
 
-		token := parts[1]
-		// 实际项目中替换为 JWT 解析逻辑：
-		// claims, err := jwt.ParseToken(token, secret)
-		// c.Set("userID", claims.UserID)
-		// c.Set("companyID", claims.CompanyID)
-		_ = token
-		_ = secret
-
+		auth.SetAuthUser(c, &auth.AuthUser{
+			UserID:   claims.UserID,
+			Username: claims.Username,
+			Roles:    claims.Roles,
+		})
 		c.Next()
 	}
+}
+
+// OptionalAuth 可选认证中间件
+//
+// 有 Token 则解析注入，无 Token 也放行。
+func OptionalAuth(jwtMgr *auth.JWTManager) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		tokenStr := extractBearerToken(c)
+		if tokenStr == "" {
+			c.Next()
+			return
+		}
+
+		claims, err := jwtMgr.Parse(tokenStr)
+		if err != nil {
+			// Token 无效也放行，不注入 AuthUser
+			c.Next()
+			return
+		}
+
+		auth.SetAuthUser(c, &auth.AuthUser{
+			UserID:   claims.UserID,
+			Username: claims.Username,
+			Roles:    claims.Roles,
+		})
+		c.Next()
+	}
+}
+
+func extractBearerToken(c *gin.Context) string {
+	header := c.GetHeader("Authorization")
+	if header == "" {
+		return ""
+	}
+	parts := strings.SplitN(header, " ", 2)
+	if len(parts) != 2 || !strings.EqualFold(parts[0], "bearer") {
+		return ""
+	}
+	return parts[1]
 }
