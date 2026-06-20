@@ -1,0 +1,20 @@
+# buf.gen.yaml — Buf 代码生成配置
+# https://buf.build/docs/configuration/v2/buf-gen-yaml
+version: v2
+
+managed:
+  enabled: true
+  override:
+    - file_option: go_package_prefix
+      value: github.com/example/dd-frame/proto/gen
+
+plugins:
+  # protoc-gen-go: 生成 Go 消息类型
+  - local: protoc-gen-go
+    out: gen
+    opt: paths=source_relative
+
+  # protoc-gen-connect-go: 生成 Connect RPC 服务代码
+  - local: protoc-gen-connect-go
+    out: gen
+    opt: paths=source_relative

@@ -5,6 +5,7 @@
 *.so
 *.dylib
 dd-frame
+bin/
 
 # Test binary
 *.test

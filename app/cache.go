@@ -13,7 +13,14 @@ import (
 var GlobalRedis *redis.Client
 
 // InitRedis 初始化 Redis 连接
+//
+// 如果 Addr 为空，跳过初始化（未配置 Redis 时不报错）。
 func InitRedis(cfg *RedisConfig) (*redis.Client, error) {
+	if cfg.Addr == "" {
+		applog.Info("redis skipped: no addr configured")
+		return nil, nil
+	}
+
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     cfg.Addr,
 		Password: cfg.Password,

@@ -14,7 +14,14 @@ import (
 var GlobalDB *gorm.DB
 
 // InitDatabase 初始化 GORM 数据库连接
+//
+// 如果 Host 或 DBName 为空，跳过初始化（未配置数据库时不报错）。
 func InitDatabase(cfg *DatabaseConfig) (*gorm.DB, error) {
+	if cfg.Host == "" || cfg.DBName == "" {
+		applog.Info("database skipped: no host or dbname configured")
+		return nil, nil
+	}
+
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local",
 		cfg.User, cfg.Password, cfg.Host, cfg.Port, cfg.DBName)
 

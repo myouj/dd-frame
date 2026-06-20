@@ -1,0 +1,11 @@
+# buf.yaml — Buf 模块配置
+# https://buf.build/docs/configuration/v2/buf-yaml
+version: v2
+
+modules:
+  - path: .
+    name: buf.build/example/dd-frame
+
+# 依赖（按需添加 Google 公共 proto）
+# deps:
+#   - buf.build/googleapis/googleapis

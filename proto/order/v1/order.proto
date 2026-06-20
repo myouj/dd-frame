@@ -1,0 +1,134 @@
+syntax = "proto3";
+
+package order.v1;
+
+option go_package = "github.com/example/dd-frame/proto/gen/order/v1;order";
+
+import "google/protobuf/timestamp.proto";
+
+// =============================================================================
+// 枚举
+// =============================================================================
+
+// OrderStatus 订单状态
+enum OrderStatus {
+  ORDER_STATUS_UNSPECIFIED = 0;
+  ORDER_STATUS_DRAFT       = 1;
+  ORDER_STATUS_SUBMITTED   = 2;
+  ORDER_STATUS_SHIPPED     = 3;
+  ORDER_STATUS_COMPLETED   = 4;
+  ORDER_STATUS_CANCELLED   = 5;
+}
+
+// PaymentType 支付方式
+enum PaymentType {
+  PAYMENT_TYPE_UNSPECIFIED = 0;
+  PAYMENT_TYPE_ALIPAY      = 1;
+  PAYMENT_TYPE_WECHAT      = 2;
+  PAYMENT_TYPE_BANK_CARD   = 3;
+}
+
+// =============================================================================
+// 资源消息
+// =============================================================================
+
+// OrderItem 订单项
+message OrderItem {
+  int64  product_id  = 1;
+  int32  quantity    = 2;
+  int64  unit_price  = 3; // 分
+  string product_name = 4;
+}
+
+// Order 订单
+message Order {
+  int64                     id          = 1;
+  string                    order_no    = 2;
+  int64                     customer_id = 3;
+  OrderStatus               status      = 4;
+  int64                     amount      = 5; // 总金额（分）
+  repeated OrderItem        items       = 6;
+  google.protobuf.Timestamp created_at  = 7;
+  google.protobuf.Timestamp updated_at  = 8;
+}
+
+// =============================================================================
+// 请求 / 响应
+// =============================================================================
+
+// CreateOrderRequest 创建订单请求
+message CreateOrderRequest {
+  int64              customer_id = 1;
+  repeated OrderItem items       = 2;
+}
+
+// CreateOrderResponse 创建订单响应
+message CreateOrderResponse {
+  Order order = 1;
+}
+
+// SubmitOrderRequest 提交订单请求
+message SubmitOrderRequest {
+  string order_no = 1;
+}
+
+// SubmitOrderResponse 提交订单响应
+message SubmitOrderResponse {
+  Order order = 1;
+}
+
+// CancelOrderRequest 取消订单请求
+message CancelOrderRequest {
+  string order_no = 1;
+  string reason   = 2;
+}
+
+// CancelOrderResponse 取消订单响应
+message CancelOrderResponse {
+  Order order = 1;
+}
+
+// GetOrderRequest 查询订单请求
+message GetOrderRequest {
+  string order_no = 1;
+}
+
+// GetOrderResponse 查询订单响应
+message GetOrderResponse {
+  Order order = 1;
+}
+
+// ListOrdersRequest 查询订单列表请求
+message ListOrdersRequest {
+  int64 customer_id = 1;
+  int32 page        = 2;
+  int32 page_size   = 3;
+}
+
+// ListOrdersResponse 查询订单列表响应
+message ListOrdersResponse {
+  repeated Order orders      = 1;
+  int64          total_count = 2;
+}
+
+// =============================================================================
+// 服务定义
+// =============================================================================
+
+// OrderService 订单服务
+service OrderService {
+  // CreateOrder 创建订单
+  rpc CreateOrder(CreateOrderRequest) returns (CreateOrderResponse);
+
+  // SubmitOrder 提交订单
+  rpc SubmitOrder(SubmitOrderRequest) returns (SubmitOrderResponse);
+
+  // CancelOrder 取消订单
+  rpc CancelOrder(CancelOrderRequest) returns (CancelOrderResponse);
+
+  // GetOrder 查询订单
+  rpc GetOrder(GetOrderRequest) returns (GetOrderResponse);
+
+  // ListOrders 查询订单列表
+  rpc ListOrders(ListOrdersRequest) returns (ListOrdersResponse);
+}

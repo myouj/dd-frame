@@ -16,11 +16,17 @@ func main() {
 	app.InitLogger(&cfg.Log)
 	defer applog.Sync()
 
-	// 3. 初始化数据库（无 DB 时跳过）
-	// _, err = app.InitDatabase(&cfg.Database)
+	// 3. 初始化数据库（未配置时自动跳过）
+	_, err = app.InitDatabase(&cfg.Database)
+	if err != nil {
+		panic("init database failed: " + err.Error())
+	}
 
-	// 4. 初始化 Redis（无 Redis 时跳过）
-	// _, err = app.InitRedis(&cfg.Redis)
+	// 4. 初始化 Redis（未配置时自动跳过）
+	_, err = app.InitRedis(&cfg.Redis)
+	if err != nil {
+		panic("init redis failed: " + err.Error())
+	}
 
 	// 5. 装配模块
 	router := app.Wire(cfg)
