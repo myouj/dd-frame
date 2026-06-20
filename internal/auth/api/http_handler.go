@@ -9,18 +9,20 @@ import (
 
 	authdomain "github.com/example/dd-frame/internal/auth/domain"
 	"github.com/example/dd-frame/internal/auth/service"
+	"github.com/example/dd-frame/middleware"
 	"github.com/example/dd-frame/pkg/auth"
 	"github.com/example/dd-frame/pkg/response"
 )
 
 // AuthAPI auth 模块 HTTP Handler
 type AuthAPI struct {
-	svc *service.AuthAppService
+	svc     *service.AuthAppService
+	checker auth.PermissionChecker
 }
 
 // NewAuthAPI 创建 auth API handler
-func NewAuthAPI(svc *service.AuthAppService) *AuthAPI {
-	return &AuthAPI{svc: svc}
+func NewAuthAPI(svc *service.AuthAppService, checker auth.PermissionChecker) *AuthAPI {
+	return &AuthAPI{svc: svc, checker: checker}
 }
 
 // RegisterPublicRoutes 注册无需认证的公开路由
@@ -35,32 +37,35 @@ func (a *AuthAPI) RegisterRoutes(rg *gin.RouterGroup) {
 	g.GET("/me", a.MeHandler)
 	g.PUT("/password", a.ChangePasswordHandler)
 
-	// 用户管理
+	// 用户管理（需要 user:* 权限）
 	user := rg.Group("/user")
+	user.Use(middleware.RequirePermission(a.checker, "user:read"))
 	user.GET("", a.ListUsersHandler)
 	user.GET("/:id", a.GetUserHandler)
-	user.POST("", a.CreateUserHandler)
-	user.PUT("/:id", a.UpdateUserHandler)
-	user.DELETE("/:id", a.DisableUserHandler)
-	user.POST("/:id/roles", a.AssignRoleHandler)
-	user.DELETE("/:id/roles/:roleCode", a.RevokeRoleHandler)
+	user.POST("", middleware.RequirePermission(a.checker, "user:create"), a.CreateUserHandler)
+	user.PUT("/:id", middleware.RequirePermission(a.checker, "user:update"), a.UpdateUserHandler)
+	user.DELETE("/:id", middleware.RequirePermission(a.checker, "user:delete"), a.DisableUserHandler)
+	user.POST("/:id/roles", middleware.RequirePermission(a.checker, "user:update"), a.AssignRoleHandler)
+	user.DELETE("/:id/roles/:roleCode", middleware.RequirePermission(a.checker, "user:update"), a.RevokeRoleHandler)
 
-	// 角色管理
+	// 角色管理（需要 role:* 权限）
 	role := rg.Group("/role")
+	role.Use(middleware.RequirePermission(a.checker, "role:read"))
 	role.GET("", a.ListRolesHandler)
 	role.GET("/:code", a.GetRoleHandler)
-	role.POST("", a.CreateRoleHandler)
-	role.PUT("/:code", a.UpdateRoleHandler)
-	role.DELETE("/:code", a.DeleteRoleHandler)
-	role.POST("/:code/permissions", a.AssignPermHandler)
-	role.DELETE("/:code/permissions/:permCode", a.RevokePermHandler)
+	role.POST("", middleware.RequirePermission(a.checker, "role:create"), a.CreateRoleHandler)
+	role.PUT("/:code", middleware.RequirePermission(a.checker, "role:update"), a.UpdateRoleHandler)
+	role.DELETE("/:code", middleware.RequirePermission(a.checker, "role:delete"), a.DeleteRoleHandler)
+	role.POST("/:code/permissions", middleware.RequirePermission(a.checker, "role:update"), a.AssignPermHandler)
+	role.DELETE("/:code/permissions/:permCode", middleware.RequirePermission(a.checker, "role:update"), a.RevokePermHandler)
 
-	// 权限管理
+	// 权限管理（需要 permission:* 权限）
 	perm := rg.Group("/permission")
+	perm.Use(middleware.RequirePermission(a.checker, "permission:read"))
 	perm.GET("", a.ListPermissionsHandler)
-	perm.POST("", a.CreatePermissionHandler)
-	perm.PUT("/:code", a.UpdatePermissionHandler)
-	perm.DELETE("/:code", a.DeletePermissionHandler)
+	perm.POST("", middleware.RequirePermission(a.checker, "permission:create"), a.CreatePermissionHandler)
+	perm.PUT("/:code", middleware.RequirePermission(a.checker, "permission:update"), a.UpdatePermissionHandler)
+	perm.DELETE("/:code", middleware.RequirePermission(a.checker, "permission:delete"), a.DeletePermissionHandler)
 }
 
 // ==================== Auth Handlers ====================

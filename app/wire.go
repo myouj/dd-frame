@@ -3,8 +3,8 @@ package app
 import (
 	"github.com/gin-gonic/gin"
 
-	authmodule "github.com/example/dd-frame/internal/auth"
 	"github.com/example/dd-frame/example/order"
+	authmodule "github.com/example/dd-frame/internal/auth"
 	"github.com/example/dd-frame/middleware"
 	"github.com/example/dd-frame/pkg/auth"
 )
@@ -35,9 +35,13 @@ func Wire(cfg *Config) *gin.Engine {
 
 	// auth 模块
 	if GlobalDB != nil {
-		authAPI, _ := authmodule.Wire(GlobalDB, jwtMgr, cfg.RBAC.SeedEnabled)
+		authAPI, permChecker := authmodule.Wire(GlobalDB, jwtMgr, cfg.RBAC.SeedEnabled)
 		authAPI.RegisterPublicRoutes(public)
 		authAPI.RegisterRoutes(v1)
+
+		// permChecker 可供其他模块路由使用，例如：
+		// orderGroup.Use(middleware.RequirePermission(permChecker, "order:read"))
+		_ = permChecker
 	}
 
 	// 订单模块

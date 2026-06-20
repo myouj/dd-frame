@@ -127,7 +127,7 @@ func seedData(bizSvc biz.AuthBizService) {
 	}
 
 	// 创建默认 admin 用户
-	_, err = bizSvc.CreateUser(ctx, &biz.CreateUserRequest{
+	adminUser, err := bizSvc.CreateUser(ctx, &biz.CreateUserRequest{
 		Username: "admin",
 		Password: "admin123",
 		Nickname: "管理员",
@@ -139,8 +139,7 @@ func seedData(bizSvc biz.AuthBizService) {
 	}
 
 	// 为 admin 用户分配 admin 角色
-	// 查询刚创建的用户 ID
-	if err := bizSvc.AssignRole(ctx, 1, "admin"); err != nil {
+	if err := bizSvc.AssignRole(ctx, adminUser.ID, "admin"); err != nil {
 		applog.Info("seed: assign admin role to admin user failed", "error", err)
 	}
 
@@ -169,11 +168,11 @@ func Wire(db *gorm.DB, jwtMgr *auth.JWTManager, seedEnabled bool) (*api.AuthAPI,
 	// 应用层
 	appSvc := service.NewAuthAppService(bizSvc)
 
-	// API 层
-	authAPI := api.NewAuthAPI(appSvc)
-
 	// PermissionChecker
 	checker := &permissionChecker{biz: bizSvc}
+
+	// API 层
+	authAPI := api.NewAuthAPI(appSvc, checker)
 
 	// 种子数据
 	if seedEnabled {

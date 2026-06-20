@@ -140,7 +140,9 @@ func (d *UserDAO) List(ctx context.Context, page, pageSize int) ([]*domain.User,
 	var models []UserModel
 	var total int64
 
-	d.db.WithContext(ctx).Model(&UserModel{}).Count(&total)
+	if err := d.db.WithContext(ctx).Model(&UserModel{}).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
 	offset := (page - 1) * pageSize
 	if err := d.db.WithContext(ctx).Offset(offset).Limit(pageSize).
 		Order("id DESC").Find(&models).Error; err != nil {
@@ -250,7 +252,19 @@ func (d *RoleDAO) Update(ctx context.Context, role *domain.Role) error {
 }
 
 func (d *RoleDAO) Delete(ctx context.Context, code string) error {
-	return d.db.WithContext(ctx).Where("code = ?", code).Delete(&RoleModel{}).Error
+	return d.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var role RoleModel
+		if err := tx.Where("code = ?", code).First(&role).Error; err != nil {
+			return err
+		}
+		if err := tx.Where("role_id = ?", role.ID).Delete(&UserRoleModel{}).Error; err != nil {
+			return err
+		}
+		if err := tx.Where("role_id = ?", role.ID).Delete(&RolePermissionModel{}).Error; err != nil {
+			return err
+		}
+		return tx.Delete(&role).Error
+	})
 }
 
 func (d *RoleDAO) List(ctx context.Context) ([]*domain.Role, error) {
@@ -335,7 +349,16 @@ func (d *PermissionDAO) Update(ctx context.Context, perm *domain.Permission) err
 }
 
 func (d *PermissionDAO) Delete(ctx context.Context, code string) error {
-	return d.db.WithContext(ctx).Where("code = ?", code).Delete(&PermissionModel{}).Error
+	return d.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var perm PermissionModel
+		if err := tx.Where("code = ?", code).First(&perm).Error; err != nil {
+			return err
+		}
+		if err := tx.Where("permission_id = ?", perm.ID).Delete(&RolePermissionModel{}).Error; err != nil {
+			return err
+		}
+		return tx.Delete(&perm).Error
+	})
 }
 
 func (d *PermissionDAO) List(ctx context.Context, resource string) ([]*domain.Permission, error) {

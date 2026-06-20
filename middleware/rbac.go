@@ -23,8 +23,14 @@ func RequirePermission(checker auth.PermissionChecker, codes ...string) gin.Hand
 			return
 		}
 
-		// 超级管理员直接放行
-		if user.IsAdmin() {
+		// 超级管理员直接放行（查询数据库，不依赖 JWT）
+		isAdmin, err := checker.HasRole(c.Request.Context(), user.UserID, "admin")
+		if err != nil {
+			response.Error(c, http.StatusInternalServerError, 50000, "role check failed")
+			c.Abort()
+			return
+		}
+		if isAdmin {
 			c.Next()
 			return
 		}
@@ -57,12 +63,18 @@ func RequireAllPermissions(checker auth.PermissionChecker, codes ...string) gin.
 			return
 		}
 
-		if user.IsAdmin() {
+		isAdmin, err := checker.HasRole(c.Request.Context(), user.UserID, "admin")
+		if err != nil {
+			response.Error(c, http.StatusInternalServerError, 50000, "role check failed")
+			c.Abort()
+			return
+		}
+		if isAdmin {
 			c.Next()
 			return
 		}
 
-		ok, err := checker.HasAllPermissions(c.Request.Context(), user.UserID, codes)
+		ok, err = checker.HasAllPermissions(c.Request.Context(), user.UserID, codes)
 		if err != nil {
 			response.Error(c, http.StatusInternalServerError, 50000, "permission check failed")
 			c.Abort()
@@ -87,7 +99,13 @@ func RequireRole(checker auth.PermissionChecker, roles ...string) gin.HandlerFun
 			return
 		}
 
-		if user.IsAdmin() {
+		isAdmin, err := checker.HasRole(c.Request.Context(), user.UserID, "admin")
+		if err != nil {
+			response.Error(c, http.StatusInternalServerError, 50000, "role check failed")
+			c.Abort()
+			return
+		}
+		if isAdmin {
 			c.Next()
 			return
 		}
