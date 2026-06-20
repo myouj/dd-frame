@@ -2,7 +2,7 @@
 # dd-frame Makefile
 # =============================================================================
 
-.PHONY: help build run test vet clean proto proto-gen proto-deps lint
+.PHONY: help build run test vet clean proto proto-gen proto-deps lint port-check db-init db-seed
 
 # 默认目标
 .DEFAULT_GOAL := help
@@ -14,6 +14,11 @@ APP_NAME     := dd-frame
 BUILD_DIR    := ./bin
 PROTO_DIR    := ./proto
 PROTO_OUT    := ./proto/gen
+CONFIG_FILE  := config/config.yaml
+
+# 从配置文件读取端口，默认 8080
+HTTP_PORT    := $(shell grep 'http_port' $(CONFIG_FILE) 2>/dev/null | head -1 | awk '{print $$2}' | tr -d '[:space:]')
+HTTP_PORT    := $(or $(HTTP_PORT),8080)
 
 # Go 相关
 GOCMD        := go
@@ -44,8 +49,25 @@ help: ## 显示帮助信息
 build: ## 编译项目
 	$(GOBUILD) -o $(BUILD_DIR)/$(APP_NAME) ./main.go
 
-run: ## 运行项目
+run: port-check ## 运行项目
 	$(GOCMD) run main.go
+
+port-check: ## 检查端口是否被占用
+	@PID=$$(lsof -ti:$(HTTP_PORT) 2>/dev/null); \
+	if [ -n "$$PID" ]; then \
+		echo "⚠  端口 $(HTTP_PORT) 被 PID=$$PID 占用"; \
+		echo "   执行 'make kill-port' 终止，或修改 $(CONFIG_FILE) 中的 http_port"; \
+		exit 1; \
+	fi
+
+kill-port: ## 终止占用端口的进程
+	@PID=$$(lsof -ti:$(HTTP_PORT) 2>/dev/null); \
+	if [ -n "$$PID" ]; then \
+		kill -9 $$PID; \
+		echo "已终止 PID=$$PID（端口 $(HTTP_PORT)）"; \
+	else \
+		echo "端口 $(HTTP_PORT) 未被占用"; \
+	fi
 
 test: ## 运行测试
 	$(GOTEST) -race -cover ./...
@@ -100,6 +122,16 @@ proto-breaking: ## 使用 buf 检查 proto 兼容性变更
 	cd $(PROTO_DIR) && buf breaking --against .git
 
 proto: proto-gen ## proto-gen 的别名
+
+# ---------------------------------------------------------------------------
+# 数据库命令
+# ---------------------------------------------------------------------------
+
+db-init: ## 数据库迁移（创建/更新表结构）
+	$(GOCMD) run cmd/dbinit/main.go --config $(CONFIG_FILE)
+
+db-seed: ## 数据库初始化种子数据（admin 角色/用户/权限）
+	$(GOCMD) run cmd/dbinit/main.go --seed --config $(CONFIG_FILE)
 
 # ---------------------------------------------------------------------------
 # 组合命令
