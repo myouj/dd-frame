@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 
 	"github.com/example/dd-frame/example/order"
 	authmodule "github.com/example/dd-frame/internal/auth"
@@ -18,13 +19,29 @@ import (
 func Wire(cfg *Config) *gin.Engine {
 	r := gin.New()
 
-	// 全局中间件
+	// 全局中间件（按顺序注册）
 	r.Use(middleware.Recovery())
 	r.Use(middleware.CORS())
+
+	// 分布式追踪中间件（在 RequestID 前，traceID 优先）
+	if cfg.Tracing.Enabled {
+		r.Use(otelgin.Middleware(cfg.Tracing.ServiceName))
+	}
+
 	r.Use(middleware.RequestID())
+
+	// Prometheus 指标中间件
+	if cfg.Metrics.Enabled {
+		r.Use(middleware.Metrics())
+	}
+
 	r.Use(middleware.Logger())
 
 	jwtMgr := auth.NewJWTManager(cfg.JWT.Secret, cfg.JWT.ExpiresIn)
+
+	// 基础设施路由（无需认证）
+	RegisterHealthRoutes(r)
+	RegisterMetricsRoute(r, &cfg.Metrics)
 
 	// 公开路由组（无需认证）
 	public := r.Group("/api/v1")

@@ -14,6 +14,8 @@ type Config struct {
 	JWT      JWTConfig      `mapstructure:"jwt"`
 	RBAC     RBACConfig     `mapstructure:"rbac"`
 	Log      LogConfig      `mapstructure:"log"`
+	Tracing  TracingConfig  `mapstructure:"tracing"`
+	Metrics  MetricsConfig  `mapstructure:"metrics"`
 }
 
 // ServerConfig 服务器配置
@@ -55,6 +57,20 @@ type LogConfig struct {
 // RBACConfig RBAC 权限配置
 type RBACConfig struct {
 	SeedEnabled bool `mapstructure:"seed_enabled"`
+}
+
+// TracingConfig 分布式追踪配置
+type TracingConfig struct {
+	Enabled     bool   `mapstructure:"enabled"`
+	ServiceName string `mapstructure:"service_name"`
+	Endpoint    string `mapstructure:"endpoint"` // OTLP HTTP endpoint
+	Insecure    bool   `mapstructure:"insecure"` // 开发环境跳过 TLS
+}
+
+// MetricsConfig Prometheus 指标配置
+type MetricsConfig struct {
+	Enabled bool   `mapstructure:"enabled"`
+	Path    string `mapstructure:"path"` // 默认 /metrics
 }
 
 // GlobalConfig 全局配置实例（启动时加载一次）
