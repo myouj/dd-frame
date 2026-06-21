@@ -7,15 +7,15 @@ dd-frame 基于 **DDD（领域驱动设计）+ 六边形架构（端口与适配
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │                          main.go 入口                               │
-│              配置加载 · 日志初始化 · DB/Redis · 启动服务器             │
+│     配置加载 · 日志初始化 · 追踪初始化 · DB/Redis · 启动服务器     │
 ├─────────────────────────────────────────────────────────────────────┤
 │                       app/ — 基础设施 & 装配                         │
-│   config.go · server.go · database.go · cache.go · logger.go · wire.go│
+│ config · server · database · cache · logger · health · tracing · metrics│
 ├─────────────────────────────────────────────────────────────────────┤
 │                     middleware/ — 横切关注点                          │
-│   recovery · cors · request_id · logger · auth                      │
+│ recovery · cors · otelgin · request_id · metrics · logger · auth · rbac│
 ├──────────────────┬──────────────────┬───────────────────────────────┤
-│  example/order/  │ internal/其他模块 │  ... 新增业务模块              │
+│  example/order/  │ internal/auth    │  ... 新增业务模块              │
 │  ┌────────────┐  │  ┌────────────┐  │                               │
 │  │   api/     │  │  │   api/     │  │  入站适配器（HTTP/gRPC）       │
 │  │ service/   │  │  │ service/   │  │  应用边界（DTO 转换）          │
@@ -26,7 +26,7 @@ dd-frame 基于 **DDD（领域驱动设计）+ 六边形架构（端口与适配
 │  └────────────┘  │  └────────────┘  │                               │
 ├──────────────────┴──────────────────┴───────────────────────────────┤
 │                          pkg/ — 共享工具包                            │
-│   errors · log · response · pagination                              │
+│ auth (JWT+RBAC) · errors · log · response · pagination             │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -196,6 +196,23 @@ sequenceDiagram
 | ACL 翻译隔离 | 跨模块调用必须经过防腐层 |
 | app/wire.go 装配 | 唯一"知道所有模块"的地方 |
 
+## 中间件链
+
+全局中间件按顺序注册，每个均为独立模块，通过配置开关控制：
+
+```
+请求 → Recovery → CORS → otelgin(Tracing) → RequestID → Metrics → Logger
+         ↓              ↓                        ↓          ↓        ↓
+      panic恢复     跨域处理    自动创建Span     UUID生成   指标采集   日志(含traceID)
+```
+
+路由级中间件（按需添加）：
+
+```
+/api/v1/*      → RequireAuth (JWT)
+/api/v1/user/* → RequireAuth + RequirePermission (RBAC)
+```
+
 ## 启动流程
 
 ```
@@ -203,8 +220,13 @@ main.go
   │
   ├── app.LoadConfig()         ← Viper 加载 config/config.yaml
   ├── app.InitLogger()         ← Zap 结构化日志
+  ├── app.InitTracing()        ← OpenTelemetry（未启用时 Noop）
   ├── app.InitDatabase()       ← GORM + MySQL（未配置时跳过）
   ├── app.InitRedis()          ← go-redis（未配置时跳过）
-  ├── app.Wire()               ← IoC 装配所有模块
-  └── app.RunServer()          ← 启动 Gin HTTP :8080
+  ├── app.Wire()               ← IoC 装配所有模块 + 注册中间件
+  │   ├── /health, /ready      ← 健康检查端点
+  │   ├── /metrics             ← Prometheus 端点（配置启用时）
+  │   ├── /swagger/*           ← Swagger UI（非 release 模式）
+  │   └── /api/v1/*            ← 业务路由
+  └── app.RunServer()          ← 启动 Gin HTTP（优雅关闭）
 ```
