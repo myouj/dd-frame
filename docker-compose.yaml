@@ -1,0 +1,109 @@
+# =============================================================================
+# dd-frame 开发环境编排
+# =============================================================================
+# 用法：
+#   docker-compose up -d        # 启动所有服务
+#   docker-compose up mysql     # 仅启动 MySQL
+#   docker-compose up redis     # 仅启动 Redis
+#   docker-compose logs -f app  # 查看应用日志
+#   docker-compose down -v      # 停止并清除数据卷
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # 应用服务
+  # ---------------------------------------------------------------------------
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dd-frame-app
+    ports:
+      - "8080:8080"
+    environment:
+      - DD_DATABASE_HOST=mysql
+      - DD_DATABASE_PORT=3306
+      - DD_DATABASE_USER=root
+      - DD_DATABASE_PASSWORD=ddframe123
+      - DD_DATABASE_DBNAME=ddframe
+      - DD_REDIS_ADDR=redis:6379
+      - DD_TRACING_ENABLED=true
+      - DD_TRACING_ENDPOINT=jaeger:4318
+      - DD_TRACING_INSECURE=true
+      - DD_METRICS_ENABLED=true
+      - DD_SERVER_MODE=debug
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - dd-net
+
+  # ---------------------------------------------------------------------------
+  # MySQL 8.0
+  # ---------------------------------------------------------------------------
+  mysql:
+    image: mysql:8.0
+    container_name: dd-frame-mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ddframe123
+      MYSQL_DATABASE: ddframe
+      TZ: Asia/Shanghai
+    volumes:
+      - mysql-data:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uddframe123"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - dd-net
+
+  # ---------------------------------------------------------------------------
+  # Redis 7
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: dd-frame-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - dd-net
+
+  # ---------------------------------------------------------------------------
+  # Jaeger（分布式追踪可视化）
+  # ---------------------------------------------------------------------------
+  jaeger:
+    image: jaegertracing/all-in-one:1.55
+    container_name: dd-frame-jaeger
+    ports:
+      - "16686:16686"   # Jaeger UI
+      - "4318:4318"     # OTLP HTTP
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    restart: unless-stopped
+    networks:
+      - dd-net
+
+volumes:
+  mysql-data:
+  redis-data:
+
+networks:
+  dd-net:
+    driver: bridge

@@ -1,0 +1,47 @@
+# Git
+.git/
+.gitignore
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Build artifacts
+bin/
+*.exe
+*.test
+*.out
+*.prof
+
+# Docs (not needed in image)
+docs/
+
+# Local config (use config.example.yaml)
+config/config.yaml
+
+# Proto generated
+proto/gen/
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+docker-compose.yaml
+.dockerignore
+
+# CI
+.github/
+
+# Makefile (not needed inside container)
+Makefile
+
+# Superpowers
+.qoder/
+.agent/

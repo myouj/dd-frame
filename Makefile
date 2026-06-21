@@ -2,7 +2,7 @@
 # dd-frame Makefile
 # =============================================================================
 
-.PHONY: help build run test vet clean proto proto-gen proto-deps lint port-check db-init db-seed swagger swagger-deps
+.PHONY: help build run test vet clean proto proto-gen proto-deps lint port-check db-init db-seed swagger swagger-deps docker-build docker-up docker-down docker-logs
 
 # 默认目标
 .DEFAULT_GOAL := help
@@ -150,3 +150,19 @@ db-seed: ## 数据库初始化种子数据（admin 角色/用户/权限）
 check: vet test ## 编译检查 + 测试
 
 all: tidy proto-gen build test ## 完整构建流程（整理依赖 + proto生成 + 编译 + 测试）
+
+# ---------------------------------------------------------------------------
+# Docker 命令
+# ---------------------------------------------------------------------------
+
+docker-build: ## 构建 Docker 镜像
+	docker build -t $(APP_NAME):latest .
+
+docker-up: ## 启动开发环境（app + MySQL + Redis + Jaeger）
+	docker-compose up -d
+
+docker-down: ## 停止开发环境
+	docker-compose down
+
+docker-logs: ## 查看容器日志
+	docker-compose logs -f app
