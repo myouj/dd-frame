@@ -8,14 +8,16 @@ import (
 
 // Config 应用总配置
 type Config struct {
-	Server   ServerConfig   `mapstructure:"server"`
-	Database DatabaseConfig `mapstructure:"database"`
-	Redis    RedisConfig    `mapstructure:"redis"`
-	JWT      JWTConfig      `mapstructure:"jwt"`
-	RBAC     RBACConfig     `mapstructure:"rbac"`
-	Log      LogConfig      `mapstructure:"log"`
-	Tracing  TracingConfig  `mapstructure:"tracing"`
-	Metrics  MetricsConfig  `mapstructure:"metrics"`
+	Server    ServerConfig    `mapstructure:"server"`
+	Database  DatabaseConfig  `mapstructure:"database"`
+	Redis     RedisConfig     `mapstructure:"redis"`
+	JWT       JWTConfig       `mapstructure:"jwt"`
+	RBAC      RBACConfig      `mapstructure:"rbac"`
+	Log       LogConfig       `mapstructure:"log"`
+	Tracing   TracingConfig   `mapstructure:"tracing"`
+	Metrics   MetricsConfig   `mapstructure:"metrics"`
+	RateLimit RateLimitConfig `mapstructure:"ratelimit"`
+	Storage   StorageConfig   `mapstructure:"storage"`
 }
 
 // ServerConfig 服务器配置
@@ -71,6 +73,38 @@ type TracingConfig struct {
 type MetricsConfig struct {
 	Enabled bool   `mapstructure:"enabled"`
 	Path    string `mapstructure:"path"` // 默认 /metrics
+}
+
+// RateLimitConfig 请求限流配置
+type RateLimitConfig struct {
+	Enabled   bool    `mapstructure:"enabled"`
+	Rate      float64 `mapstructure:"rate"`       // 每秒请求数
+	Burst     int     `mapstructure:"burst"`      // 突发上限
+	Backend   string  `mapstructure:"backend"`    // memory / redis
+	KeyPrefix string  `mapstructure:"key_prefix"` // Redis key 前缀，默认 "rl:"
+}
+
+// StorageConfig 文件存储配置
+type StorageConfig struct {
+	Driver string             `mapstructure:"driver"` // local / oss
+	Local  LocalStorageConfig `mapstructure:"local"`
+	OSS    OSSStorageConfig   `mapstructure:"oss"`
+}
+
+// LocalStorageConfig 本地磁盘存储配置
+type LocalStorageConfig struct {
+	BaseDir string `mapstructure:"base_dir"` // 默认 ./uploads
+	BaseURL string `mapstructure:"base_url"` // 如 /uploads
+}
+
+// OSSStorageConfig 阿里云 OSS 存储配置
+type OSSStorageConfig struct {
+	Endpoint        string `mapstructure:"endpoint"`
+	AccessKeyID     string `mapstructure:"access_key_id"`
+	AccessKeySecret string `mapstructure:"access_key_secret"`
+	Bucket          string `mapstructure:"bucket"`
+	Prefix          string `mapstructure:"prefix"`
+	CDNURL          string `mapstructure:"cdn_url"`
 }
 
 // GlobalConfig 全局配置实例（启动时加载一次）

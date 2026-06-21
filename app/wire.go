@@ -10,7 +10,13 @@ import (
 	authmodule "github.com/example/dd-frame/internal/auth"
 	"github.com/example/dd-frame/middleware"
 	"github.com/example/dd-frame/pkg/auth"
+	"github.com/example/dd-frame/pkg/storage"
+
+	applog "github.com/example/dd-frame/pkg/log"
 )
+
+// GlobalStore 全局存储实例（启动时初始化）
+var GlobalStore storage.Store
 
 // Wire 全局 Composition Root
 //
@@ -30,6 +36,16 @@ func Wire(cfg *Config) *gin.Engine {
 
 	r.Use(middleware.RequestID())
 
+	// 请求限流中间件
+	r.Use(middleware.RateLimiter(
+		cfg.RateLimit.Enabled,
+		cfg.RateLimit.Backend,
+		cfg.RateLimit.Rate,
+		cfg.RateLimit.Burst,
+		GlobalRedis,
+		cfg.RateLimit.KeyPrefix,
+	))
+
 	// Prometheus 指标中间件
 	if cfg.Metrics.Enabled {
 		r.Use(middleware.Metrics())
@@ -42,6 +58,9 @@ func Wire(cfg *Config) *gin.Engine {
 	// 基础设施路由（无需认证）
 	RegisterHealthRoutes(r)
 	RegisterMetricsRoute(r, &cfg.Metrics)
+
+	// 初始化存储
+	initStore(&cfg.Storage)
 
 	// 公开路由组（无需认证）
 	public := r.Group("/api/v1")
@@ -72,10 +91,58 @@ func Wire(cfg *Config) *gin.Engine {
 	// productAPI := product.Wire()
 	// productAPI.RegisterRoutes(v1)
 
+	// 文件上传路由示例（需要认证）
+	if GlobalStore != nil {
+		v1.POST("/upload", middleware.FileUpload(GlobalStore, 10<<20, nil), func(c *gin.Context) {
+			result := middleware.GetUploadResult(c)
+			c.JSON(200, gin.H{
+				"code": 0,
+				"data": result,
+			})
+		})
+	}
+
 	// Swagger UI（非 release 模式可用）
 	if cfg.Server.Mode != "release" {
 		r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	}
 
 	return r
+}
+
+// initStore 根据配置初始化存储后端
+func initStore(cfg *StorageConfig) {
+	if cfg.Driver == "" {
+		return
+	}
+
+	switch cfg.Driver {
+	case "local":
+		store, err := storage.NewLocalStore(cfg.Local.BaseDir, cfg.Local.BaseURL)
+		if err != nil {
+			applog.Error("init local storage failed", "err", err)
+			return
+		}
+		GlobalStore = store
+		applog.Info("storage: local", "base_dir", cfg.Local.BaseDir)
+
+	case "oss":
+		store, err := storage.NewOSSStore(storage.OSSConfig{
+			Endpoint:        cfg.OSS.Endpoint,
+			AccessKeyID:     cfg.OSS.AccessKeyID,
+			AccessKeySecret: cfg.OSS.AccessKeySecret,
+			Bucket:          cfg.OSS.Bucket,
+			Prefix:          cfg.OSS.Prefix,
+			CDNURL:          cfg.OSS.CDNURL,
+		})
+		if err != nil {
+			applog.Error("init oss storage failed", "err", err)
+			return
+		}
+		GlobalStore = store
+		applog.Info("storage: oss", "bucket", cfg.OSS.Bucket)
+
+	default:
+		applog.Warn("unknown storage driver", "driver", cfg.Driver)
+	}
 }
