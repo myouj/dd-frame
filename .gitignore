@@ -36,3 +36,6 @@ proto/gen/
 # Logs
 *.log
 logs/
+
+# Uploads (local storage)
+uploads/

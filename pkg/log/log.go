@@ -61,9 +61,12 @@ func Error(msg string, keysAndValues ...interface{}) {
 	Logger.Errorw(msg, keysAndValues...)
 }
 
-// WithContext 从 context 提取字段（预留扩展）
-func WithContext(_ context.Context) *zap.SugaredLogger {
-	return Logger
+// WithContext 从 context 提取请求级 logger
+//
+// 如果 context 中已注入 logger（通过 WithLogger），返回该 logger；
+// 否则返回全局 Logger。
+func WithContext(ctx context.Context) *zap.SugaredLogger {
+	return FromContext(ctx)
 }
 
 // Sync 刷新日志缓冲
