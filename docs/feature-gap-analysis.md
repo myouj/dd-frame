@@ -21,6 +21,7 @@
 | CLI | dbinit（迁移 + 种子数据） | ✅ |
 | 构建 | Makefile（build/run/test/vet/proto/swagger/db/port-check） | ✅ |
 | 模块模板 | internal/_template 完整骨架 | ✅ |
+| Excel 工具 | pkg/excel 泛型解析 + 生成 + Gin 集成 | ✅ |
 
 ---
 
@@ -205,6 +206,14 @@
   - ✅ 任务注册 + 分布式锁防重复执行
 - **用途**：定期数据清理、报表生成
 
+#### 23. Excel 导入导出 ✅
+- **实现**：`pkg/excel/`，基于泛型 + struct tag 的通用 Excel 解析/生成工具
+- **需要**（已完成）：
+  - ✅ `Parse[T]` 泛型解析（struct tag 映射、类型转换、行级错误）
+  - ✅ `Generate[T]` 泛型生成（支持模板填充）
+  - ✅ Gin 集成（`ParseFormFile` + `Download`）
+- **用途**：数据批量导入导出、报表生成
+
 ---
 
 ## 优先级总结
@@ -233,3 +242,4 @@
 | **P3** | 代码生成器 | 开发效率 | ❌ |
 | **P3** | 通知系统 | 业务通知 | ❌ |
 | **P3** | 定时任务 | 周期性操作 | ✅ |
+| **P3** | Excel 工具 | 数据导入导出 | ✅ |
