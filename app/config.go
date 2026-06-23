@@ -18,6 +18,7 @@ type Config struct {
 	Metrics   MetricsConfig   `mapstructure:"metrics"`
 	RateLimit RateLimitConfig `mapstructure:"ratelimit"`
 	Storage   StorageConfig   `mapstructure:"storage"`
+	Cron      CronConfig      `mapstructure:"cron"`
 }
 
 // ServerConfig 服务器配置
@@ -105,6 +106,13 @@ type OSSStorageConfig struct {
 	Bucket          string `mapstructure:"bucket"`
 	Prefix          string `mapstructure:"prefix"`
 	CDNURL          string `mapstructure:"cdn_url"`
+}
+
+// CronConfig 定时任务配置
+type CronConfig struct {
+	Enabled   bool   `mapstructure:"enabled"`
+	Locker    string `mapstructure:"locker"`     // memory / redis
+	KeyPrefix string `mapstructure:"key_prefix"` // Redis 锁 key 前缀
 }
 
 // GlobalConfig 全局配置实例（启动时加载一次）

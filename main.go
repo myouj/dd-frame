@@ -2,8 +2,10 @@ package main
 
 import (
 	"context"
+	"time"
 
 	"github.com/example/dd-frame/app"
+	appcron "github.com/example/dd-frame/pkg/cron"
 	applog "github.com/example/dd-frame/pkg/log"
 
 	_ "github.com/example/dd-frame/docs" // swagger 生成文档
@@ -52,6 +54,41 @@ func main() {
 	// 6. 装配模块
 	router := app.Wire(cfg)
 
-	// 7. 启动服务器
+	// 7. 初始化定时任务
+	scheduler := initCron(&cfg.Cron)
+	if scheduler != nil {
+		defer scheduler.Stop()
+	}
+
+	// 8. 启动服务器
 	app.RunServer(cfg, router)
+}
+
+// initCron 初始化定时任务调度器
+func initCron(cfg *app.CronConfig) *appcron.Scheduler {
+	if !cfg.Enabled {
+		return nil
+	}
+
+	s := appcron.NewScheduler(appcron.Config{
+		Enabled:   cfg.Enabled,
+		Locker:    cfg.Locker,
+		KeyPrefix: cfg.KeyPrefix,
+	}, app.GlobalRedis)
+
+	// ---------- 注册定时任务 ----------
+	// 示例：每 5 分钟执行一次清理任务
+	if err := s.AddJob("example:cleanup", "0 */5 * * * *", 2*time.Minute, func(ctx context.Context) {
+		applog.Info("example cleanup job running")
+	}); err != nil {
+		applog.Error("cron: failed to register job", "job", "example:cleanup", "err", err)
+	}
+
+	// 新增任务在此追加，例如：
+	// if err := s.AddJob("report:daily", "0 0 2 * * *", 10*time.Minute, dailyReport); err != nil {
+	// 	applog.Error("cron: failed to register job", "job", "report:daily", "err", err)
+	// }
+
+	s.Start()
+	return s
 }
