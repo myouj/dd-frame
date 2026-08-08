@@ -5,7 +5,17 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	applog "github.com/example/dd-frame/pkg/log"
+	"github.com/example/dd-frame/pkg/metrics"
 )
+
+// InitMetrics 初始化 Prometheus 指标工具。
+func InitMetrics(cfg *MetricsConfig) {
+	metrics.Init(metrics.Config{
+		Enabled:   cfg.Enabled,
+		Namespace: cfg.Namespace,
+	})
+	applog.Info("metrics initialized", "enabled", cfg.Enabled, "namespace", cfg.Namespace)
+}
 
 // RegisterMetricsRoute 注册 Prometheus /metrics 端点
 //

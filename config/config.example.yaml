@@ -79,6 +79,7 @@ tracing:
 metrics:
   enabled: false           # 是否启用 Prometheus 指标端点
   path: /metrics           # 指标暴露路径
+  namespace: ""              # 指标名前缀（如 dd_frame），留空则不加前缀
 
 # ---------------------------------------------------------------------------
 # 请求限流配置
