@@ -8,6 +8,7 @@ import (
 	"gorm.io/gorm/logger"
 
 	applog "github.com/example/dd-frame/pkg/log"
+	"github.com/example/dd-frame/pkg/metrics"
 )
 
 // GlobalDB 全局数据库实例
@@ -45,6 +46,13 @@ func InitDatabase(cfg *DatabaseConfig) (*gorm.DB, error) {
 	}
 	sqlDB.SetMaxOpenConns(100)
 	sqlDB.SetMaxIdleConns(10)
+
+	if metrics.Enabled() {
+		if err := db.Use(metrics.NewGORMPlugin()); err != nil {
+			return nil, fmt.Errorf("register gorm metrics plugin failed: %w", err)
+		}
+		applog.Info("gorm metrics plugin registered")
+	}
 
 	GlobalDB = db
 	applog.Info("database connected", "driver", cfg.Driver, "host", cfg.Host, "dbname", cfg.DBName)

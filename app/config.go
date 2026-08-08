@@ -72,8 +72,9 @@ type TracingConfig struct {
 
 // MetricsConfig Prometheus 指标配置
 type MetricsConfig struct {
-	Enabled bool   `mapstructure:"enabled"`
-	Path    string `mapstructure:"path"` // 默认 /metrics
+	Enabled   bool   `mapstructure:"enabled"`
+	Path      string `mapstructure:"path"`      // 默认 /metrics
+	Namespace string `mapstructure:"namespace"` // 指标名前缀，留空则不加前缀
 }
 
 // RateLimitConfig 请求限流配置

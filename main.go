@@ -31,7 +31,10 @@ func main() {
 	app.InitLogger(&cfg.Log)
 	defer applog.Sync()
 
-	// 3. 初始化分布式追踪（返回 shutdown 函数）
+	// 3. 初始化 Prometheus 指标
+	app.InitMetrics(&cfg.Metrics)
+
+	// 4. 初始化分布式追踪（返回 shutdown 函数）
 	shutdownTracing := app.InitTracing(&cfg.Tracing)
 	defer func() {
 		if err := shutdownTracing(context.Background()); err != nil {
@@ -39,28 +42,28 @@ func main() {
 		}
 	}()
 
-	// 4. 初始化数据库（未配置时自动跳过）
+	// 5. 初始化数据库（未配置时自动跳过）
 	_, err = app.InitDatabase(&cfg.Database)
 	if err != nil {
 		panic("init database failed: " + err.Error())
 	}
 
-	// 5. 初始化 Redis（未配置时自动跳过）
+	// 6. 初始化 Redis（未配置时自动跳过）
 	_, err = app.InitRedis(&cfg.Redis)
 	if err != nil {
 		panic("init redis failed: " + err.Error())
 	}
 
-	// 6. 装配模块
+	// 7. 装配模块
 	router := app.Wire(cfg)
 
-	// 7. 初始化定时任务
+	// 8. 初始化定时任务
 	scheduler := initCron(&cfg.Cron)
 	if scheduler != nil {
 		defer scheduler.Stop()
 	}
 
-	// 8. 启动服务器
+	// 9. 启动服务器
 	app.RunServer(cfg, router)
 }
 
